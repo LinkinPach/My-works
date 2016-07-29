@@ -1,3 +1,9 @@
+- diagnoform_kid
+
+The Diagnoform site is used to know the physical condition of a person after he/she realizes a few physical exercises.
+
+ These files are for the kid version. The kids who do the exercises receive a diploma, a kind of visual gift. The files show the development part (php and object), the graphic part (smarty templates combined to a css file) and the request treatment (way before frameworks existed)
+
 - neogames_ranking
 
 A ranking page on the neogames site (http://linkinpach.free.fr/NeoGames_classement.php)
