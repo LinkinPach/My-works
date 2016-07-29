@@ -1,0 +1,213 @@
+				<!-- 2. Add the JavaScript to initialize the chart on document ready -->
+		<script type="text/javascript">
+
+
+$(document).ready(function() {
+<?php
+$boucle=$_REQUEST['boucle'];
+$nbm=$_REQUEST['nbm'];
+$nbf=$_REQUEST['nbf'];
+$echelle_min=$_REQUEST['echelle_min'];
+$echelle_max=$_REQUEST['echelle_max'];
+//Variables pour le(s) graphique(s) masculin(s)
+for($m=1;$m<=$nbm;$m++){
+$varpointsm='data_points_m'.$m;
+$data_points_m[$m]=$_REQUEST[$varpointsm];
+$nomcollm='nom_coll_m'.$m;
+$nom_coll_m[$m]=$_REQUEST[$nomcollm];
+?>
+var data_points_m<?php echo $m?> = <?php echo $data_points_m[$m] ?>;
+var nom_coll_m<?php echo $m?> = '<?php echo $nom_coll_m[$m] ?>';
+<?php
+}
+//Variables pour le(s) graphique(s) féminin(s)
+for($f=1;$f<=$nbf;$f++){
+$varpointsf='data_points_f'.$f;
+$data_points_f[$f]=$_REQUEST[$varpointsf];
+$nomcollf='nom_coll_f'.$f;
+$nom_coll_f[$f]=$_REQUEST[$nomcollf];
+?>
+var data_points_f<?php echo $f?> = <?php echo $data_points_f[$f] ?>;
+var nom_coll_f<?php echo $f?> = '<?php echo $nom_coll_f[$f] ?>';
+<?php
+}
+
+for($b=1;$b<=$boucle;$b++){
+$varimg='grille_qfg'.$b;
+//$varnom='nomgroupe'.$b;
+$varsexe='sexe'.$b;
+$grille_qfg=$_REQUEST[$varimg];
+//$nomgroupe=$_REQUEST[$varnom];
+$sexe=$_REQUEST[$varsexe];
+$sexelib[$b]=$sexe;
+$grille_qfg="'".$grille_qfg."'";
+//$nomgroupe="'".$nomgroupe."'";
+$sexe="'".$sexe."'";
+$container="'container_courbe_q_".$b."'";
+?>
+
+var grille_qfg = <?php echo $grille_qfg ?>;
+//var nomgroupe = <?php echo $nomgroupe ?>;
+var sexe = <?php echo $sexe ?>;
+var container = <?php echo $container ?>;
+
+var echelle_min = <?php echo $echelle_min ?>;
+var echelle_max = <?php echo $echelle_max ?>;
+
+var chart_qfg_courbe;
+
+Highcharts.setOptions({
+   chart: {
+      plotBackgroundImage: 'http://test.hmcinfo.net/diagnoform/commun/images/'+grille_qfg+'.png'
+   }
+});
+
+			//$(document).ready(function() {
+
+    chart_qfg_courbe = new Highcharts.Chart({
+    chart: {
+        //renderTo: 'container_courbe',
+        renderTo: container,
+        defaultSeriesType: 'scatter',
+        height: 800,
+        width: 1000,
+        marginBottom: 150,
+        //backgroundColor: '#FCFFC5',
+        backgroundColor: '#FFFFFF'
+    },
+    legend: {
+        enabled: true,
+        //layout: 'vertical',
+        width: 600,
+        floating: true,
+        align: 'left',
+        x: 50,
+        y: -50,
+        verticalAlign: 'bottom'
+    },
+
+
+
+    labels: {
+            items:[{
+              html: 'Zone du bas :<br/>Moyenne des 25% faibles',
+              style: {
+                left: '650px',
+                top: '710px',
+                fontFamily: 'Gill Sans MT',
+                fontSize: '10pt',
+                fontWeight: 'bold'
+              }
+            },
+            {
+              html: 'Zone du milieu :<br/>Moyenne des 50% de la population',
+              style: {
+                left: '650px',
+                top: '670px',
+                fontFamily: 'Gill Sans MT',
+                fontSize: '10pt',
+                fontWeight: 'bold'
+              }
+            },
+            {
+               html: 'Zone du haut :<br/>Moyenne des 25% forts',
+               style: {
+                 left: '650px',
+                 top: '630px',
+                 fontFamily: 'Gill Sans MT',
+                 fontSize: '10pt',
+                 fontWeight: 'bold'
+               }
+             }
+            
+          ]
+        },
+
+
+
+    title: {
+        text: 'Position des quotients de forme '+sexe+' en fonction de l\'age ',
+        y: 20
+    },
+
+        tooltip: {
+              enabled: false
+        },
+    xAxis: {
+        tickInterval: 1,
+        tickLength: 0,
+        labels: {
+            enabled: true
+        },
+        lineWidth: 0,
+        minorGridLineWidth: 0,
+        gridLineWidth: 1,
+        offset: 0,
+        min: echelle_min,
+        max: echelle_max,
+        title: {
+            enabled: true,
+            text: 'Age'
+        }
+    },
+    yAxis: {
+        minorGridLineWidth: 0,
+        minorTickInterval: 1,
+        minorTickLength: 0,
+        minorTickWidth: 0,
+        tickInterval: 5,
+        labels: {
+            enabled:true
+        },
+        lineWidth: 0,
+        gridLineWidth: 1,
+        offset: 0,
+        min: 0,
+        max: 90,
+        title: {
+            enabled: true,
+            text: 'Quotient de Forme'
+        }
+    },
+    exporting: {
+        enableImages: true
+    },
+          credits: {
+            enabled: false
+          },
+          navigation: {
+            buttonOptions: {
+            enabled: true
+            }
+          },    
+    
+    
+    series: [
+
+<?php
+if($sexelib[$b]=='masculins'){
+for($m=1;$m<=$nbm;$m++){
+if($m>1){echo ",";}
+echo "{data: data_points_m".$m.",name: nom_coll_m".$m."}";
+//echo "{data: data_points_m".$m."}";
+}
+}elseif($sexelib[$b]=='feminins'){
+for($f=1;$f<=$nbf;$f++){
+if($f>1){echo ",";}
+echo "{data: data_points_f".$f.",name: nom_coll_f".$f."}";
+//echo "{data: data_points_f".$f."}";
+}
+}
+?>
+    ]
+});
+//});
+
+	
+			
+
+<?php
+}
+?>
+});
+</script>
