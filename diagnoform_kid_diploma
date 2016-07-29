@@ -1,0 +1,152 @@
+<?php
+session_start();
+require_once('../smarty/classes/setup.php');
+require_once('../fonction_php/form.php');
+
+$data=unserialize(urldecode(stripslashes($_SESSION['data'])));
+//session_unregister($data);
+
+
+
+
+myExtract($_REQUEST, $GLOBALS);
+$data_globaux=unserialize(urldecode(stripslashes($data_globaux)));
+
+$image=unserialize(urldecode(stripslashes($image)));
+
+$smarty = new Smarty_print;
+
+$smarty->caching = false;
+
+if(!isset($action) || $action!='visu')
+{
+/*if (ereg("Safari", $_SERVER["HTTP_USER_AGENT"]))
+{
+?>
+<script language="JavaScript">
+<!--
+
+alert("L'impression automatique ne fonctionne pas sous un navigateur de type Safari");
+// -->
+</script>
+
+<?PHP
+}
+else
+{*/
+//if (ereg("MSIE", $_SERVER["HTTP_USER_AGENT"]))
+// !! fonction ereg() dépréciée !!
+if(preg_match("/MSIE/",$_SERVER["HTTP_USER_AGENT"]))
+{ $action = 'window.print(), setTimeout(window.close(), 500)'; }
+else{ $action = 'window.print(), setTimeout(window.close, 500)'; }
+ //$smarty->assign('onload',$action);
+}
+/*
+$pdf=new FPDF('L','mm','A4');
+$pdf->Open();
+$pdf->Image('../picto/diplome_banniere.png',10,8,333,333);
+$pdf->AddPage();
+$pdf->SetFont('Arial','B',16);
+$pdf->Cell(40,10,'Hello World !');
+$pdf->Output();
+*/
+/*
+$smarty->assign('diplome','../picto/diplome.png');
+$size_dipl=GetImageSize('../picto/diplome.png');
+print_r($size_dipl); 
+//$hauteur=round($size[1]*70/$size[0],0);
+$smarty->assign('largeur_diplome',$size_dipl[0].'px');
+$smarty->assign('hauteur_diplome',$size_dipl[1].'px');
+*/
+if(!isset($cheminlogo) || $cheminlogo=='')
+{ $cheminlogo = '../'; }
+
+$smarty->display('imprime_header.tpl');
+$smarty->clear_all_assign();
+/*
+if(isset($cheminlogo) && $cheminlogo!='')
+{ require_once($cheminlogo.'/entete_impression.php'); }
+else
+{ $cheminlogo = '.'; 
+require_once('./entete_impression.php'); }
+unset($cheminlogo);
+$chemin = '..';
+
+require_once('./logo_coll.php');
+*/
+
+//L'entete a été passé en url. Afin d'en extraire le contenu, on le sépare via les espaces
+$entete = explode(" ", $entete);
+//La date possède 3 caractères en trop a la fin
+$entete[3]=substr($entete[3],0,-3);
+$entete[0]=substr($entete[0],7);
+$entete[2]=substr($entete[2],1,-1);
+//Tableau a afficher
+$data=array('Date : ',$entete[3],'Nom : ',$entete[0],'Prénom : ',$entete[1],'Etablissement : ',$entete[2]);
+$smarty->assign('data',$data);
+$smarty->assign('table',"class='resultat' width='60%'");
+$smarty->assign('tr',array('bgcolor="#eeeeee"','bgcolor="#dddddd"'));
+$smarty->assign('td',array('width="30%" align="left"','width="70%" align="center"'));
+//On récupère la dernière case du tableau qui indique le point fort.
+$qualite_princ=$data_globaux[count($data_globaux)-1];
+//Affichage des données du diplome
+$smarty->assign('qualite',$qualite_princ);
+//$smarty->assign('dipl_banniere',$cheminlogo.'/picto/diplome_banniere_plus_courte2.png');
+$smarty->assign('dipl_banniere',$cheminlogo.'/picto/diplome_new_banniere.png');
+$smarty->assign('dipl_pointilles',$cheminlogo.'/picto/pointilles.jpg');
+//On récupère l'indice de souplesse (case 6 actuellement)
+$souplesse=$data_globaux[6];
+if(($souplesse)<=8){
+$smiley=$cheminlogo."/picto/sad.jpg";
+}else if((($souplesse)>9)and(($souplesse)<=16)){
+$smiley=$cheminlogo."/picto/happy.jpg";
+}else if(($souplesse)>17){
+$smiley=$cheminlogo."/picto/happy2.jpg";
+}
+//On affiche le smiley correspondant en fonction de la note
+$smarty->assign('smiley',$smiley);
+if($qualite_princ!='Force'){
+$smarty->assign('carre_Force',$cheminlogo.'/picto/carre_f.jpg');
+}
+$smarty->assign('animal_force',$cheminlogo.'/picto/animal_f.jpg');
+$smarty->assign('qualite_principale',$cheminlogo.'/picto/qualite_'.$qualite_princ.'.jpg');
+if($qualite_princ!='Vitesse'){
+$smarty->assign('carre_Vitesse',$cheminlogo.'/picto/carre_v.jpg');
+}
+$smarty->assign('animal_vitesse',$cheminlogo.'/picto/animal_v.jpg');
+if($qualite_princ!='Endurance'){
+$smarty->assign('carre_Endurance',$cheminlogo.'/picto/carre_e.jpg');
+}
+$smarty->assign('animal_endurance',$cheminlogo.'/picto/animal_e.jpg');
+if($qualite_princ!='Coordination'){
+$smarty->assign('carre_Coordination',$cheminlogo.'/picto/carre_c.jpg');
+}
+//pour afficher le carré coché correspondant au point fort
+$smarty->assign('carre_'.$qualite_princ,$cheminlogo.'/picto/carre_'.$qualite_princ.'.jpg');
+//Encore l'affichage du diplome
+$smarty->assign('animal_coordination',$cheminlogo.'/picto/animal_c.jpg');
+//La partie bonhomme
+//On récupère la case du tableau qui indique le globalConditionPhysique.
+$gcp=$data_globaux[count($data_globaux)-5];
+$smarty->assign('valeur_gcp',$gcp);
+if($gcp>=50){
+$smarty->assign('dipl_bonhommes',$cheminlogo.'/picto/diplome_bonhommes1.jpg');
+}else if($gcp<50){
+$smarty->assign('dipl_bonhommes',$cheminlogo.'/picto/diplome_bonhommes2.jpg');
+}
+
+$smarty->assign('dipl_carres',$cheminlogo.'/picto/diplome_carres2.png');
+
+$signature = $_SERVER['HTTP_USER_AGENT']; // Signature du navigateur
+if (eregi("MSIE", $signature)) {
+$smarty->display('imprimer_diplome2.tpl');
+} else if (eregi("Mozilla/", $signature)) {
+$smarty->display('imprimer_diplome.tpl');
+}
+
+
+$smarty->clear_all_assign();
+$smarty->display('imprime_footer.tpl');
+
+unset($data);
+?>
