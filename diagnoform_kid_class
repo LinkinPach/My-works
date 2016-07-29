@@ -1,0 +1,124 @@
+<?php
+
+Class Base_donnees
+{
+
+public $resultat_debut;
+public $resultat_fin;
+public $resultat_modif;
+public $resultat_requete=Array();
+public $resultat_transactions=Array();
+public $database;
+public $message;
+public $db;
+
+function affect_db()
+{
+if($this->database=='') { $this->database='sebouger'; }
+$this->db=@mysql_select_db($this->database);
+}
+
+function debut_transaction()
+{
+$this->affect_db();
+$trans1=mysql_query("START TRANSACTION");// or die(mysql_error());
+if($trans1)
+{ @mysql_free_result($trans1);  $this->resultat_debut=true; }
+else
+{ @mysql_free_result($trans1);  $this->resultat_debut=false; }
+}
+
+function close_ok()
+{
+//$requete="ROLLBACK";
+$requete="COMMIT";
+$trans1=@mysql_query($requete);
+if($trans1) 
+{ @mysql_free_result($trans1);  $this->resultat_fin=true; }
+else
+{ @mysql_free_result($trans1);  $this->resultat_fin=false; }
+}
+
+function close_ko()
+{
+$requete="ROLLBACK";
+$trans1=@mysql_query($requete);
+if($trans1) 
+{ @mysql_free_result($trans1);  $this->resultat_fin=true; }
+else
+{ @mysql_free_result($trans1);  $this->resultat_fin=false; }
+}
+
+
+
+function insertion($table,$champs,$valeurs)
+{
+$this->affect_db();
+$requete="insert into $table ($champs) values ($valeurs);";
+//echo $requete;
+$trans1=@mysql_query($requete);// or die(mysql_error());
+if($trans1)
+{ @mysql_free_result($trans1); $this->resultat_modif=true;  }
+else
+{ @mysql_free_result($trans1); $this->resultat_modif=false; }
+}
+
+
+function requete($table,$champs,$clause)
+{
+$this->affect_db();
+$numrequete="select $champs from $table $clause;";
+//echo $numrequete;
+$result=@mysql_query($numrequete); // or die(mysql_error());
+while($resultat5=@mysql_fetch_assoc($result))
+{ $this->resultat_requete[] = $resultat5; }
+@mysql_free_result($result);
+unset($resultat5);
+}
+
+
+
+function mise_a_jour($table,$champs,$clause)
+{
+$this->affect_db();
+$requete="update $table set $champs $clause;";
+//print_r($requete);
+$trans1=mysql_query($requete) or die(mysql_error());
+if($trans1)
+{ @mysql_free_result($trans1); $this->resultat_modif=true; }
+else
+{ @mysql_free_result($trans1); $this->resultat_modif=false; }
+}
+
+function sup($table,$clause)
+{
+$this->affect_db();
+$requete="delete from $table $clause;"; 
+//echo $requete; 
+$result=@mysql_query($requete); 
+if($result)
+{ @mysql_free_result($trans1); $this->resultat_modif=true; }
+else
+{ @mysql_free_result($trans1); $this->resultat_modif=false; }
+}
+
+
+
+function recherche_union($table,$champs,$clause, $clause2)
+{
+$this->affect_db();
+$numrequete="(select $champs from $table $clause) union (select $champs from $table $clause2)";
+$result=mysql_query($numrequete);
+while($resultat5=@mysql_fetch_assoc($result))
+{ $this->resultat_requete[] = $resultat5; }
+@mysql_free_result($result);
+unset($resultat5);
+}
+
+
+}
+
+
+
+
+?>
