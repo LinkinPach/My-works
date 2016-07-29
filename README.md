@@ -2,7 +2,8 @@
 
 The Diagnoform site is used to know the physical condition of a person after he/she realizes a few physical exercises.
 
- These files are for the kid version. The kids who do the exercises receive a diploma, a kind of visual gift. The files show the development part (php and object), the graphic part (smarty templates combined to a css file) and the request treatment (way before frameworks existed)
+ These files are for the kid version. The kids who do the exercises receive a diploma, a kind of visual gift. The files show the development part (php and object), the graphic part (smarty templates, css file) and the request treatment (way before frameworks existed)
+ It also uses the Highcharts technology, a module designed for the creation of beautiful and dynamic charts with java.
 
 - neogames_ranking
 
