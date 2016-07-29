@@ -1,0 +1,304 @@
+<?php
+
+//On traite les données
+
+$contrainte=$_POST['contrainte'];
+if($contrainte==1){
+//Impossible de proposer des sports dans ce cas
+$contrainte_libelle='Vous avez une contrainte de santé spécifique (handicap, obésité, diabète, insuffisance cardaique ou respiratoire ...)';
+echo "<br>".$contrainte_libelle;
+echo "<br><br><span class='rouge'>Nous vous recommandons de consulter votre médecin avant d'exercer toute activité physique trop intense.</span><br><br>";
+}else{
+//On fait le traitement
+$contrainte_libelle='Vous n\'avez pas de contrainte de santé spécifique';
+
+//Partie en plus car ici les données utilisateur sont fournies juste avant
+$m=$_POST['DateMonth'];
+$d=$_POST['DateDay'];
+$y=$_POST['DateYear'];
+$datenaiss=mktime(0,0,0,$_POST['DateMonth'],$_POST['DateDay'],$_POST['DateYear']);
+
+$actid=$_POST['activite'];
+$act_user=new Base_donnees;
+$act_user->requete('Activite','*','where idActivite="'.$actid.'" ');
+
+$age_calc=new Utilisateur;
+$age_calc->calcul_age($_POST['DateDay'],$_POST['DateMonth'],$_POST['DateYear']);
+$age=$age_calc->age;
+$anniv=$age_calc->txt_anniv;
+
+$sexe=$_POST['sexe'];
+if($sexe==1){
+$sexe_libelle='Masculin';
+$sexe_user='F';
+}else{
+$sexe_libelle='Féminin';
+$sexe_user='M';
+}
+
+$taille=$_POST['taille'];
+$poids=$_POST['poids'];
+$imc=($poids/($taille/100*$taille/100));
+$imc_user=round($imc, "2");
+
+$condition=$_POST['condition'];
+if($condition==1){
+$condition_libelle='Très bon';
+}elseif($condition==2){
+$condition_libelle='Bon';
+}elseif($condition==3){
+$condition_libelle='Moyen';
+}elseif($condition==4){
+$condition_libelle='Faible';
+}
+
+//Je récupère le bon enregistrement pour le critere age
+$rechcritage=new Base_donnees;
+//$rechcritage->requete('Critere','*','where "'.$_SESSION['age'].'" >=Critere.val_min AND "'.$_SESSION['age'].'"<=Critere.val_max and categorie_critere="age"');
+$rechcritage->requete('Critere','*','where "'.$age.'" >=Critere.val_min AND "'.$age.'"<=Critere.val_max and categorie_critere="age"');
+$tab_id_crit[0]=$rechcritage->resultat_requete[0]['idCritere'];
+unset($rechcritage);
+if($imc_user>=28){
+//Si IMC élevé on récup l'id critère de l'IMC
+$rechcritimc=new Base_donnees;
+$rechcritimc->requete('Critere','*','where categorie_critere="imc"');
+$tab_id_crit[1]=$rechcritimc->resultat_requete[0]['idCritere'];
+unset($rechcritimc);
+}
+if($condition_user==4){
+//Si condition phys faible on récup l'id critère condition phys
+$rechcritcond=new Base_donnees;
+$rechcritcond->requete('Critere','*','where categorie_critere="condition"');
+$tab_id_crit[2]=$rechcritcond->resultat_requete[0]['idCritere'];
+unset($rechcritcond);
+}
+  //Si on vient de la recherche, on passe ici
+  if(isset($_REQUEST['ok'])){
+  //Exception si on sélectionne "l'ensemble de mes qualités physiques", on remplace l'id 34 par les 5 id phys
+  if($_POST['physique'][0]==34){
+  $_POST['physique']=array('0'=>'13','1'=>'14','2'=>'16','3'=>'17','4'=>'18');
+  }
+$verif_phys=new Utilisateur;
+$verif_phys->verif_objectif_cocher($_POST['physique']);
+for($i=0;$i<(sizeof($verif_phys->tab_id_crit));$i++)
+{
+$tab_id_crit[]=$verif_phys->tab_id_crit[$i];
+}
+
+$verif_gen=new Utilisateur;
+$verif_gen->verif_objectif_cocher($_POST['general']);
+for($i=0;$i<(sizeof($verif_gen->tab_id_crit));$i++)
+{
+$tab_id_crit[]=$verif_gen->tab_id_crit[$i];
+}
+
+$verif_opt=new Utilisateur;
+$verif_opt->verif_objectif_cocher($_POST['optionnel']);
+for($i=0;$i<(sizeof($verif_opt->tab_id_crit));$i++)
+{
+$tab_id_crit[]=$verif_opt->tab_id_crit[$i];
+}
+  //Sinon c'est qu'on vient de la partie affichage des donnees de l'utilisateur connecté
+  //Dans ce cas il faut récupérer les indices des critères sauvegardés dans la requête
+  }else{
+      for($i=0;$i<(sizeof($resultats_enr->resultat_requete));$i++)
+      {
+      $tab_crit_enr[]=$resultats_enr->resultat_requete[$i]['idCritere'];
+      }
+  $verif_crit=new Utilisateur;
+  $verif_crit->verif_objectif_cocher($tab_crit_enr);
+    for($i=0;$i<(sizeof($verif_crit->tab_id_crit));$i++)
+    {
+      $tab_id_crit[]=$verif_crit->tab_id_crit[$i];
+    }
+  
+  }
+//on ajoute ds la requete les critères préalablement choisis
+for($j=0;$j<(sizeof($tab_id_crit));$j++)
+{
+$req_temp.=$tab_id_crit[$j];
+if($j!=((sizeof($tab_id_crit))-1)){
+$req_temp.=',';
+}
+}
+//On fait la requete avec les les critères choisis
+$rechact=new Base_donnees;
+$rechact->requete('Activite, Critere, Activite_has_Critere','SUM(val_actcrit) AS totalsomme, libelle_activite, idActivite, sexe_activite','where Activite.idActivite=Activite_has_Critere.Activite_idActivite and Activite_has_Critere.Critere_idCritere=Critere.idCritere and Critere.idCritere IN ('.$req_temp.') GROUP BY libelle_activite ORDER BY totalsomme DESC');
+
+//On prépare l'affichage des résultats
+for($j=0;$j<(sizeof($rechact->resultat_requete));$j++)
+{
+//Partie qui permet d'ajouter des points si l'activité est déja pratiquée
+  for($l=0;$l<(sizeof($act_user->resultat_requete));$l++)
+  {
+if(($act_user->resultat_requete[$l]['idActivite'])==($rechact->resultat_requete[$j]['idActivite'])){
+$bonusprat=new Base_donnees;
+$bonusprat->requete('Activite, Critere, Activite_has_Critere','SUM(bonus_prat) AS bonus','where Activite.idActivite=Activite_has_Critere.Activite_idActivite and Activite_has_Critere.Critere_idCritere=Critere.idCritere and Critere.idCritere IN ('.$req_temp.') AND Activite.idActivite='.$rechact->resultat_requete[$j]['idActivite'].' ');
+//Aller dans la table qui ajoute des points
+$rechact->resultat_requete[$j]['totalsomme']=$rechact->resultat_requete[$j]['totalsomme']+$bonusprat->resultat_requete[0]['bonus'];
+}
+  }
+
+//Pour voir si il y a un '1' ou un '0' afin d'afficher les mises en garde
+$meg=new Base_donnees;
+$meg->requete('Activite, Critere, Activite_has_Critere, MiseEnGarde','val_actcrit, idActivite, idCritere, libelle_miseengarde_zero, libelle_miseengarde_un','where Activite.idActivite=Activite_has_Critere.Activite_idActivite and Activite_has_Critere.Critere_idCritere=Critere.idCritere and Critere.id_meg=MiseEnGarde.idMiseengarde and Critere.idCritere IN ('.$req_temp.') AND Activite.idActivite='.$rechact->resultat_requete[$j]['idActivite'].' ');
+for($k=0;$k<(sizeof($meg->resultat_requete));$k++)
+{
+if(($meg->resultat_requete[$k]['val_actcrit'])==0){
+$nbmegzero=$nbmegzero+1;
+$tab[$j].='<BR>'.$meg->resultat_requete[$k]['libelle_miseengarde_zero'];
+$rechact->resultat_requete[$j]['totalsomme']=0;
+}
+if(($meg->resultat_requete[$k]['val_actcrit'])==1){
+$tab[$j].='<BR>'.$meg->resultat_requete[$k]['libelle_miseengarde_un'];
+}
+}
+
+//Si on a au moins une mise en garde zéro, on ne prend pas le résultat en compte
+if($nbmegzero==0){
+//Pour l'affichage des résultats (on ne prend pas le sport si le sexe est incompatible)
+if(($rechact->resultat_requete[$j]['sexe_activite']=='N')||(($rechact->resultat_requete[$j]['sexe_activite'])==$sexe_user)){
+//if(($rechact->resultat_requete[$j]['sexe_activite'])!=$sexe_user){
+$tab_resultats[] = array( 'Score' => $rechact->resultat_requete[$j]['totalsomme'] ,'IdActivite' =>$rechact->resultat_requete[$j]['idActivite'], 'NomDuSport' => $rechact->resultat_requete[$j]['libelle_activite'], 'Message' => $tab[$j] );
+}
+}
+unset($nbmegzero);
+}
+
+//Si l'age est trop bas, on a aucun résultat
+if(sizeof($tab_resultats)!=0){
+// Obtient une liste de colonnes
+foreach ($tab_resultats as $key => $row) {
+    $score[$key]  = $row['Score'];
+}
+// Trier les données
+array_multisort($score, SORT_DESC, $tab_resultats);
+}
+//On prépare l'insertion des résultats trouvés
+//D'abord on récupère les id des 10 premières activités
+for($a=0;$a<10;$a++){
+//Puis les id des criteres
+  for($c=0;$c<(sizeof($tab_id_crit));$c++){
+//$tab_resul.="('".$_SESSION['iduser']."','".$tab_resultats[$a]['IdActivite']."','".$tab_id_crit[$c]."'),";
+$tab_resul.="(".$_SESSION['iduser'].",".$tab_resultats[$a]['IdActivite'].",".$tab_id_crit[$c]."),";
+  }
+}
+//On enlève les derniers caractères en vue de l'insertion
+$tab_resul = substr($tab_resul, 0, -1);
+
+//echo $tab_resul;
+
+/*
+ INSERT INTO Resultats_recherche( User_idUser, Activite_idActivite, Critere_idCritere )
+VALUES ('33', '14', '8'),('33', '14', '32'),('33', '14', '33') 
+*/
+
+
+
+//On affiche les données
+echo "<div id='partie_user2'>";
+
+echo "<p class='page2'>Votre profil :</p>";
+
+echo "Vous êtes né le ";
+echo $d;
+echo "/";
+echo $m;
+echo "/";
+echo $y;
+echo "<br>Vous avez ".$age." ans";
+if($anniv!=''){
+echo ", ".$anniv;
+}
+echo "<br>Sexe : ";
+echo $sexe_libelle;
+echo "<br><br>Taille : ";
+echo $taille;
+echo " cm - Poids : ";
+echo $poids;
+echo " kg";
+
+if($imc_user<28)
+{$signification='OK';}
+else if($imc_user>=28)
+{$signification='! IMC élevé !';}
+
+echo "<br>Votre IMC : ".$imc_user." ".$signification."<BR><BR>";
+
+
+echo "Niveau de condition physique actuel : ";
+echo $condition_libelle;
+echo "<br>".$contrainte_libelle;
+
+echo "<p class='page2'>Vous nous avez fourni les informations suivantes :</p>";
+
+if(isset($_REQUEST['ok'])){
+$verif_gen->affiche_objectif_cocher('general',$req_temp,0);
+$verif_phys->affiche_objectif_cocher('physique',$req_temp,0);
+$verif_opt->affiche_objectif_cocher('optionnel',$req_temp,0);
+}//else{
+//$partie_requete="physique' OR categorie_critere='general' OR categorie_critere='optionnel";
+//$verif_crit->affiche_objectif_cocher($partie_requete,$req_temp,1);
+//}
+echo "</div>";
+echo "<div id='partie_user3'>";
+
+//Récupération du code postal
+$cp=explode(" ",$_POST['cp']);
+$cpid=$cp[0];
+$codepostal=new Utilisateur;
+$codepostal->requete('Codepostal','*',"where codepostal=$cpid ");
+$cp_chiffre=$codepostal->resultat_requete[0]['codepostal'];
+$ville=$codepostal->resultat_requete[0]['ville'];
+$id_cp=$codepostal->resultat_requete[0]['idCodepostal'];
+
+echo "<p class='page2'>Résultats de la recherche :</p>";
+//for($l=0;$l<sizeof($tab_resultats);$l++){
+//En vue d'afficher les 10 meilleurs résultats uniquement
+for($l=0;$l<10;$l++){
+$nb_stars=$tab_resultats[$l]['Score']/5;
+$nb_stars=intval(abs($nb_stars));
+//echo "Nb d'étoiles : ".$nb_stars."-";
+$reste=$tab_resultats[$l]['Score']%5;
+//echo "Reste : ".$reste;
+//On  arrondit au supérieur en fonction du reste
+if($reste>=3){
+$nb_stars=$nb_stars+1;
+}
+//echo "<BR>".$tab_resultats[$l]['NomDuSport']."<BR>";
+$idsport=$tab_resultats[$l]['IdActivite'];
+if(($tab_resultats[$l]['NomDuSport'])!=''){
+  echo "<BR>".$tab_resultats[$l]['NomDuSport']."<BR>";
+  //La partie clubs proches n'est accessible que pour les utilisateurs disposant d'un espace privé
+  //"<a href='./orientation.php?ok=ok&clubs=clubs&idsport=$idsport&cp=$id_cp'>Clubs ...</a><BR>";
+  for($k=0;$k<$nb_stars;$k++){
+  echo "<img src='./images/star.png'>";
+  }
+  echo "<span class='page_rouge'>".$tab_resultats[$l]['Message']."</span><BR>";
+}
+
+}
+
+//print_r($tab_id_crit);
+//print_r($tab_resultats);
+
+}
+
+unset ($rechcritage);
+unset ($verif_phys);
+unset ($verif_gen);
+unset ($verif_opt);
+unset ($rechact);
+unset ($bonusprat);
+unset ($verif_crit);
+
+unset ($tab_id_crit);
+unset ($tab_crit_enr);
+unset ($tab_resultats);
+//unset ($tab_resul);
+unset ($req_temp);
+unset ($tab);
+
+
+
+?>
