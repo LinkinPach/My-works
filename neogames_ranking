@@ -1,0 +1,91 @@
+<?include ("inc/connexion.php");?>
+<?include ("inc/haut.php");?>
+
+<h1>Classement technique des jeux testés</h1>
+
+<?
+        $req2="SELECT * FROM testeur ORDER by nom_testeur";
+        $res2=mysql_query($req2,$connexion);
+        $nblig2=mysql_num_rows($res2);
+?>
+
+<TABLE>
+<FORM action="NeoGames_classement.php" method="post">
+<TR><TD><p class='texte'>Voir le classement pour un seul support : </TD><TD>
+<SELECT name="SelectSupport">
+        <OPTION value="0">Choisir le support</OPTION>
+        <?
+        $req3="SELECT * FROM support ORDER by nom_support";
+        $res3=mysql_query($req3,$connexion);
+        $nblig3=mysql_num_rows($res3);
+        for($k=0;$k<$nblig3;$k++)
+        {
+        echo "<OPTION value='".mysql_result($res3,$k,'code_support')."'>";
+        echo mysql_result($res3,$k,'nom_support');
+        echo "</OPTION>";
+        }
+        ?>
+</SELECT>
+</TD><TD><INPUT TYPE="submit" name="submit" value="Valider"></TD></TR>
+</FORM>
+
+
+
+
+
+<TR><TD><p class='texte'>
+<?
+	$choix_console=$SelectSupport;
+	if($choix_console==''){
+	$choix_console=0;
+	}
+if($choix_console==0){
+        $req1="SELECT * FROM jeu_test, jeu, support WHERE jeu_test.code_jeu=jeu.code_jeu AND jeu_test.code_support=support.code_support AND jeu_test.note_graphisme!='' AND jeu_test.note_graphisme!='/' AND jeu_test.note_animation!='' AND jeu_test.note_animation!='/' AND jeu_test.note_bandeson!='' AND jeu_test.note_bandeson!='/' AND jeu_test.note_jouabilite!='' AND jeu_test.note_jouabilite!='/' AND jeu_test.note_dureedevie!='' AND jeu_test.note_dureedevie!='/' ORDER by (note_graphisme+note_animation+note_bandeson+note_jouabilite+note_dureedevie) DESC, nom_jeu, nom_support";
+}else if($choix_console!=0){
+        $req1="SELECT * FROM jeu_test, jeu, support WHERE jeu_test.code_jeu=jeu.code_jeu AND jeu_test.code_support=support.code_support AND jeu_test.note_graphisme!='' AND jeu_test.note_graphisme!='/' AND jeu_test.note_animation!='' AND jeu_test.note_animation!='/' AND jeu_test.note_bandeson!='' AND jeu_test.note_bandeson!='/' AND jeu_test.note_jouabilite!='' AND jeu_test.note_jouabilite!='/' AND jeu_test.note_dureedevie!='' AND jeu_test.note_dureedevie!='/' AND support.code_support='".$choix_console."' ORDER by (note_graphisme+note_animation+note_bandeson+note_jouabilite+note_dureedevie) DESC, nom_jeu, nom_support";
+}
+        $res1=mysql_query($req1,$connexion);
+        $nblig1=mysql_num_rows($res1);
+	echo $nblig1;
+?>
+&nbsp;résultat(s) trouvé(s)</P></TD><TD>&nbsp;</TD><TD align="right"><a href="NeoGames_classement.php#bas" class="liens_centre" name="haut">Aller en bas</a></TD></TR>
+<TR><TD colspan="3" align="right">&nbsp;</TD></TR>
+<TR><TD colspan="3" align="center"><p class='texte'>1 (1)</p></TD></TR>
+        <?
+	$rang=1;
+        for($i=0;$i<$nblig1;$i++)
+        {
+	$codejt=mysql_result($res1,$i,'jeu_test.code_jeutest');
+	$tampon=$total;
+	$total=(mysql_result($res1,$i,'jeu_test.note_graphisme')+mysql_result($res1,$i,'jeu_test.note_animation')+mysql_result($res1,$i,'jeu_test.note_bandeson')+mysql_result($res1,$i,'jeu_test.note_jouabilite')+mysql_result($res1,$i,'jeu_test.note_dureedevie'));
+		if($total<$tampon){
+		$rang=$rang+1;
+		echo "<TR><TD colspan='3' align='center'><p class='texte'>";
+		echo $i+1;
+		echo " (";
+		echo $rang;
+		echo ")</p></TD></TR>";
+		}
+	echo "<TR><TD><a href='NeoGames_touslesjeux2.php?codejt=$codejt' class='liens_centre'>";
+	echo mysql_result($res1,$i,'nom_jeu');
+	echo "</a></TD><TD>";
+	echo "<p class='texte'>(";
+        echo mysql_result($res1,$i,'nom_support');
+	echo ")</p></TD><TD><p class='texte'>";
+	echo $total;
+	echo "</p></TD></TR>";
+	}
+	?>
+
+
+
+
+
+<TR><TD colspan="3" align="right">&nbsp;</TD></TR>
+<TR><TD colspan="3" align="right"><a href="NeoGames_classement.php#haut" class="liens_centre" name="bas">Aller en haut</a></TD></TR>
+<TR><TD colspan="3" align="right">&nbsp;</TD></TR>
+<TR><TD colspan="3"><a href='NeoGames_accueil.php' class='liens_centre'>Retour à l'accueil</a></TD></TR>
+</TABLE>
+
+
+<?include ("inc/bas.php");?>
