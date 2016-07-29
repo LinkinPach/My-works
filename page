@@ -1,9 +1,130 @@
-<html>
-<title>Titre</title>
+<?php
+//une console au pif
+$req_console="SELECT * FROM console ORDER BY id_console ASC";
+$res_console=mysql_query($req_console,$connexion);
+$nb_console=mysql_num_rows($res_console);
+$aleatoire_console=rand(1, $nb_console)-1;
+$aleatoire_console2=$aleatoire_console+1;
 
-<body>
-<p>
-Ceci est un test.
-</p>
-</body>
-</html>
+//pour les events de la console
+$req_event_c="SELECT DISTINCT (evenement.id_event), titre_event, date_event
+FROM evenement,type_event,jeu_event,jeu,console
+WHERE evenement.id_type_event=type_event.id_type_event
+AND evenement.id_event=jeu_event.id_event
+AND jeu_event.id_jeu=jeu.id_jeu
+AND jeu.id_console=console.id_console
+AND console.id_console=".$aleatoire_console2."
+ORDER BY date_event DESC";
+$res_event_c=mysql_query($req_event_c,$connexion);
+$nb_event_c=mysql_num_rows($res_event_c);
+
+$img_console=mysql_result($res_console,$aleatoire_console,'console.img_console');
+
+$size=getimagesize($img_console);
+$largeur_img=$size[0];
+$hauteur_img=$size[1];
+
+if($largeur_img==$hauteur_img){
+$wc=150;
+$hc=150;
+}
+else if($largeur_img>$hauteur_img){
+$ratio=$largeur_img/150;
+$wc=150;
+$hc=$hauteur_img/$ratio;
+//$wc=225;
+//$hc=150;
+}
+else if($hauteur_img>$largeur_img){
+$ratio=$hauteur_img/150;
+$hc=150;
+$wc=$largeur_img/$ratio;
+//$wc=150;
+//$hc=225;
+}
+
+//un jeu au pif
+$req_jeu="SELECT * FROM jeu";
+$res_jeu=mysql_query($req_jeu,$connexion);
+$nb_jeu=mysql_num_rows($res_jeu);
+$aleatoire_jeu=rand(1, $nb_jeu)-1;
+$aleatoire_jeu2=$aleatoire_jeu+1;
+
+//pour les events de la console
+$req_event_j="SELECT DISTINCT (evenement.id_event), titre_event, date_event
+FROM evenement,type_event,jeu_event,jeu
+WHERE evenement.id_type_event=type_event.id_type_event
+AND evenement.id_event=jeu_event.id_event
+AND jeu_event.id_jeu=jeu.id_jeu
+AND jeu.id_jeu=".$aleatoire_jeu2."
+ORDER BY date_event DESC";
+$res_event_j=mysql_query($req_event_j,$connexion);
+$nb_event_j=mysql_num_rows($res_event_j);
+
+$img_jeu=mysql_result($res_jeu,$aleatoire_jeu,'jeu.img_jeu');
+
+$size=getimagesize($img_jeu);
+$largeur_img=$size[0];
+$hauteur_img=$size[1];
+
+if($largeur_img==$hauteur_img){
+$wj=150;
+$hj=150;
+}
+else if($largeur_img>$hauteur_img){
+$ratio=$largeur_img/150;
+$wj=150;
+$hj=$hauteur_img/$ratio;
+//$wj=225;
+//$hj=150;
+}
+else if($hauteur_img>$largeur_img){
+$ratio=$hauteur_img/150;
+$hj=150;
+$wj=$largeur_img/$ratio;
+//$wj=150;
+//$hj=225;
+}
+?>
+		<div class="bloc-gauche">
+			<h2><img src="images/tt-random.png" alt="OSCCOP, Association de jeux vid&eacute;o de Boulogne-sur-mer Pas-de-Calais"/></h2>
+			<p>
+        <?php echo "<img src='".$img_console."' alt='".mysql_result($res_console,$aleatoire_console,'console.nom_console')."' class='illustration' height='$hc' width='$wc'/>"; ?>
+				Voici l'une des <?php echo $nb_console;?> consoles utilisées lors d'un évènement OSCCOP.<br /><br />
+        Les évènements associés à cette console sont listés ci-dessous:<br /><br />
+        <?php
+        for($i=0;$i<$nb_event_c;$i++){
+				echo date('d/m/Y',mysql_result($res_event_c,$i,'evenement.date_event'));
+        echo '<br />';
+				echo mysql_result($res_event_c,$i,'evenement.titre_event');
+        echo '<br />';
+        echo "<p><a href='event.php?idevent=".mysql_result($res_event_c,$i,'evenement.id_event')."#cr' class='lire-suite'>Lire le compte-rendu</a></p>";
+        echo '<br />';
+        }
+        ?> 
+			</p>
+    </div>
+			<p class="texte-droite">
+
+			</p>
+    <div class="bloc-droite">
+      <h2><img src="images/tt-random_vide.png" alt="OSCCOP, Association de jeux vid&eacute;o de Boulogne-sur-mer Pas-de-Calais"/></h2>
+			<p>
+        <?php echo "<img src='".$img_jeu."' alt='".mysql_result($res_jeu,$aleatoire_jeu,'jeu.nom_jeu')."' class='illustration' height='$hj' width='$wj'/>"; ?>
+				Voici l'un des <?php echo $nb_jeu;?> jeux joués lors d'un évènement OSCCOP.<br /><br />
+        Les évènements associés à ce jeu sont listés ci-dessous:<br /><br />
+        <?php
+        for($i=0;$i<$nb_event_j;$i++){
+				echo date('d/m/Y',mysql_result($res_event_j,$i,'evenement.date_event'));
+        echo '<br />';
+				echo mysql_result($res_event_j,$i,'evenement.titre_event');
+        echo '<br />';
+        echo "<p><a href='event.php?idevent=".mysql_result($res_event_j,$i,'evenement.id_event')."#cr' class='lire-suite'>Lire le compte-rendu</a></p>";
+        echo '<br />';
+        }
+        ?> 
+			</p>
+			<p class="texte-droite">
+
+			</p>
+		</div>
