@@ -14,7 +14,7 @@ public $db;
 
 function affect_db()
 {
-if($this->database=='') { $this->database='sebouger'; }
+if($this->database=='') { $this->database='nameoftheuser'; }
 $this->db=@mysql_select_db($this->database);
 }
 
